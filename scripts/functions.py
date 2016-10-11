@@ -2,7 +2,7 @@
 """functions used to train the model."""
 
 import numpy as np
-from costs.py import *
+from costs import *
 
 def compute_gradient(y, tx, w):
     """ compute the gradient associated to the MSE cost function"""
