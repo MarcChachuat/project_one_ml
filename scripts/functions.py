@@ -3,12 +3,14 @@
 
 import numpy as np
 from costs import *
+from proj1_helpers import *
+from helpers import *
 
 def compute_gradient(y, tx, w):
     """ compute the gradient associated to the MSE cost function"""
     e= y - np.dot(tx,w)
     num_samples=len(y)
-    grad=-(1./num_samples)*np.dot(np.transpose(tx),e)
+    grad=-(1/num_samples)*np.dot(np.transpose(tx),e)
     return grad 
 
 
@@ -37,16 +39,19 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
         # Compute gradient and loss
         grad=compute_gradient(y, tx, w)
         loss=compute_loss(y, tx, w)
+        print("loss : ", loss)
         # Update the weights
-        w=w-gamma*grad
+        w = w - gamma*grad
         # Store the new weight and the loss associated to the previous weight
         ws.append(np.copy(w))
+        #print(np.copy(w))
         losses.append(loss)
         # Print the new weight and the previous loss.
-        print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
-              bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
+        print("Gradient Descent iteration : ", str(n_iter), " done \n")
     # Return the arrays containing the losses and weight vectors
-    return losses, ws
+    w_final=ws[len(ws)-1]
+    #return losses, ws
+    return w_final
 
 
 def compute_stoch_gradient(y, tx, w):
@@ -57,7 +62,7 @@ def compute_stoch_gradient(y, tx, w):
 
 
 def least_squares_SGD(
-        y, tx, initial_w, batch_size, max_iters, gamma):
+        y, tx, initial_w, batch_size=1, max_iters=50, gamma=0.000001):
     """ Stochastic gradient descent algorithm using the MSE COST function
     
     inputs : 
@@ -79,9 +84,13 @@ def least_squares_SGD(
     ws = [initial_w]
     losses = []
     w=initial_w
+    # counting the iterations 
+    n_iter=0
     # for minibatch_y, minibatch_tx in batch_iter(y, tx, batch_size):
-    for minibatch_y, minibatch_tx in batch_iter(y, tx, batch_size,max_iters):
-        #Compute the stochastic gradient and the loss
+    for minibatch_y, minibatch_tx in batch_iter(y, tx, batch_size, max_iters):
+        # incrementing the count of iterations
+        n_iter=n_iter+1
+        # Compute the stochastic gradient and the loss
         stoch_grad= -(1.0/batch_size)*compute_stoch_gradient(minibatch_y, minibatch_tx, w)
         loss= compute_loss(y, tx, w)
         # Update the weight
@@ -89,8 +98,11 @@ def least_squares_SGD(
         # Store the new weight and the previous loss
         losses.append(loss)
         ws.append(w)
-    return losses, ws
-
+        print(" Stochastic Gradient Descent iteration : ", str(n_iter), " done \n")
+        print( " value of the current loss : ", str(loss)) 
+    w_final=ws[len(ws)-1]
+    #return losses, ws
+    return w_final
 
 def least_squares(y, tx):
     """calculate the least squares analytic solution.
@@ -107,12 +119,14 @@ def least_squares(y, tx):
     """
     # compute the grammarian
     gram=np.dot(np.transpose(tx),tx)
+    print ("shape du grammarian: ", gram.shape)
     # compute the optimal weight
     w=np.dot(np.dot(np.linalg.inv(gram),np.transpose(tx)),y)
+    print ("shape du optimal weight : ", w.shape)
     # compute the associated loss
     mse=compute_loss(y, tx, w)
-    return mse,w
-
+    #return mse,w
+    return w
 
 def ridge_regression(y, tx, lamb):
     """ implement ridge regression.
@@ -130,10 +144,55 @@ def ridge_regression(y, tx, lamb):
     with respect to tx and y. 
     
     """
-    # compute the analytical solution
+    #define an auxiliary variable
+    lamb_aux=2*len(y)*lamb
+    # analytical solution
     gram= np.dot(np.transpose(tx),tx)
-    w_ridge= np.dot(np.dot(np.linalg.inv(gram+lamb*np.identity(gram.shape[0])),np.transpose(tx)),y)
+    w_ridge= np.dot(np.dot(np.linalg.inv(gram+lamb_aux*np.identity(gram.shape[0])),np.transpose(tx)),y)
     # calculate the error (cost function)
     rr_cost= compute_loss(y,tx,w_ridge)+lamb*(np.linalg.norm(w_ridge)**2)
     # return the cost and the optimal weight
-    return rr_cost, w_ridge
+    #return rr_cost, w_ridge
+    return w_ridge
+
+
+
+def train_data(xtrain,ytrain,n_regression=1,lambd=0.1,gamma=0.000001,max_iters=50,batch_size=1):
+    """
+        train the model selected by "n_regression", with the lambdas parameters if needed,
+        over the training set xtrain, ytrain
+        This function has been created so that I will be able to train a chosen set of parametered 
+        models and compare them. 
+        
+        inputs:
+        "xtrain" : 2D-array, training data features
+        "ytrain" : 1D array, training data labels
+        "n_regression" : int, indicates which regression function does the training
+                "1" => least_squares_GD
+                "2" => least_squares_SGD
+                "3" => least_squares
+                "4" => ridge_regression
+        "lambd" : (optionnal) float, constraining paramater for the ridge regression
+        "gamma" : (optionnal) float, step_size of the gradient descent
+        "max_iters" : (optionnal) int, numbers of iterations in the gradient descent
+        "batch_size" : (optionnal) int, size of the batch for the stochastic gradient descent method
+        
+        ouputs: 
+        "weights" : 1D-array, the training weight for the linear model
+    """
+    #setting the initial vector
+    initial_w=np.zeros(xtrain.shape[1])
+    #print( "shape de w:", initial_w.shape)
+    
+    #applying the right regression
+    if (n_regression==1):
+        weights= least_squares_GD(ytrain, xtrain, initial_w, max_iters, gamma)
+    if (n_regression==2):
+        weights= least_squares_SGD(ytrain, xtrain, initial_w, batch_size, max_iters, gamma)
+    if (n_regression==3): 
+        weights= least_squares(ytrain, xtrain)
+    if (n_regression==4):
+        weights= ridge_regression(ytrain, xtrain, lambd)
+        
+    #returning the trained weights vector
+    return weights
