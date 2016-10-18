@@ -121,7 +121,13 @@ def my_pca(x, ratio):
     U=eigvectors[:,:k]
     return U,k
           
-   
+def build_poly(x,degree):
+    """
+        This function treats the features in x using polynomial basis. 
+        
+        input : 
+        ""
+    """
     
    
     
