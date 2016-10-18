@@ -66,3 +66,63 @@ def split_data(x, y, ratio, seed=1):
     ytest=y[indices[up:]]
     #returning the result
     return xtrain,xtest,ytrain,ytest
+
+def my_pca(x, ratio): 
+    """
+        This function realizes a PCA (features selection) on the matrix x.
+        
+        inputs : 
+        "x" : 2D (m x n) matrix (m samples, n features) containing the data
+        "ratio " : float in [0,1], indicates which percentage of the data the selected features should represent
+        
+        ouputs : 
+        "U" : 2D (n x k) matrix, projector,
+        "k" : int, new number of features
+    """
+    
+    #local variables
+    M = x
+    [m, n] = np.shape(M)
+    #substract the mean of each column
+    for j in range(n):
+        u = np.mean(x[:,j])
+        for i in range(m):
+            M[i,j] = M[i,j]-u
+    
+    #compute the covariance matrix 
+    W = np.dot(np.transpose(M),M)
+    
+    #diagonalize the matrix
+    eigval, eigvectors = np.linalg.eig(W)
+    
+    #sorte the eigenvalues in decreasing order
+    indices = np.argsort(eigval)
+    indices = indices[::-1]
+    eigval = eigval[indices]
+    eigvectors = eigvectors[:,indices]
+    print( "eigenvalues sorted by decreasing order : ", eigval)
+    
+    #find k such that the first k first values are containing ratio percent of the information
+    k=0
+    ref_sum=0
+    total_sum=np.sum(eigval)
+    while(ref_sum < ratio*total_sum ):
+        k = k+1
+        ref_sum = ref_sum+eigval[k-1]
+    
+    # debugging
+    print(" debugging : check the values :")
+    print("k : ", k)
+    print("partial sum of eigenvalues : ", ref_sum)
+    print("total sum of eigenvalues : ", total_sum)
+    print("ratio : ", str(ref_sum/total_sum))
+          
+    #keep the corresponding eigenvectors
+    U=eigvectors[:,:k]
+    return U,k
+          
+   
+    
+   
+    
+    
