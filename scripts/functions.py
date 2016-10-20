@@ -156,8 +156,7 @@ def ridge_regression(y, tx, lamb):
     return w_ridge
 
 
-
-def train_data(xtrain,ytrain,n_regression=1,lambd=0.1,gamma=0.000001,max_iters=50,batch_size=1):
+def train_data(xtrain,ytrain,n_regression = 1,lambd = 0.1,gamma = 0.000001,max_iters = 50,batch_size = 1):
     """
         train the model selected by "n_regression", with the lambdas parameters if needed,
         over the training set xtrain, ytrain
@@ -181,18 +180,133 @@ def train_data(xtrain,ytrain,n_regression=1,lambd=0.1,gamma=0.000001,max_iters=5
         "weights" : 1D-array, the training weight for the linear model
     """
     #setting the initial vector
-    initial_w=np.zeros(xtrain.shape[1])
+    initial_w = np.zeros(xtrain.shape[1])
     #print( "shape de w:", initial_w.shape)
     
     #applying the right regression
-    if (n_regression==1):
-        weights= least_squares_GD(ytrain, xtrain, initial_w, max_iters, gamma)
-    if (n_regression==2):
-        weights= least_squares_SGD(ytrain, xtrain, initial_w, batch_size, max_iters, gamma)
-    if (n_regression==3): 
-        weights= least_squares(ytrain, xtrain)
-    if (n_regression==4):
+    if (n_regression == 1):
+        weights = least_squares_GD(ytrain, xtrain, initial_w, max_iters, gamma)
+    if (n_regression == 2):
+        weights = least_squares_SGD(ytrain, xtrain, initial_w, batch_size, max_iters, gamma)
+    if (n_regression == 3): 
+        weights = least_squares(ytrain, xtrain)
+    if (n_regression == 4):
         weights= ridge_regression(ytrain, xtrain, lambd)
         
     #returning the trained weights vector
     return weights
+
+####################################################################################################################################################################### Logistic regression functions ############################################################
+# Warning !!!! These functions are to be used with labels 0 or 1 therefore we have to pre-process the training labels and post process the predicted ones
+
+def sigmoid(t):
+    #I approximate the value of the sigmoid function when its argument is large or when it is low
+    s = 0
+    if (t > 10):
+        s = 1
+    else:
+        if (t < -10):
+            s = 0
+        else:
+            s = math.exp(t)/(1+math.exp(t))
+    return s
+
+
+def calculate_logistic_gradient(y, tx, w):
+    """
+    compute the gradient of loss function in logistic regression.
+    """
+    #transpose tx
+    x = np.transpose(tx)
+    
+    #apply the sigmoid to tx,w
+    #input array
+    arg_sigmo = np.dot(tx,w)
+    #function that apply the sigmoid to every cell of the array
+    vsigmo = np.vectorize(sigmoid)
+    #computing the resulting vector
+    res_sigmo = vsigmo(arg_sigmo)
+    
+    #computing the difference between this vector and the labels
+    diff = res_sigmo-y
+    
+    #compute the gradient
+    grad = np.dot(x,diff)
+    return grad
+
+
+def learning_by_logistic_gradient_descent(y, tx, w, alpha):
+    """
+    In logistic regression
+    Do one step of gradient descen using logistic regression.
+    Return the loss and the updated weight.
+    """
+    #compute the loss for the current parameters
+    loss = calculate_logistic_loss(y, tx, w)
+    
+    #compute the gradient
+    grad = calculate_logistic_gradient(y, tx, w)
+    
+    #update the weight vector
+    w_new = w -alpha*grad
+    
+    #return the previous loss and the new weight vector
+    return loss, w_new
+
+
+def logistic_regression(y, x, gamma = 0.01, max_iter = 1000, threshold = 1e-8):
+    """
+        This function, inspired by the gradient descent demo of TD5 performs a gradient descent for 
+        logistic regression
+    """
+    #initialize the vector of losses
+    losses = []
+
+    # build tx
+    tx = np.c_[np.ones((y.shape[0], 1)), x]
+    w = np.zeros((tx.shape[1], 1))
+
+    # start the logistic regression
+    for iter in range(max_iter):
+        # get loss and update w.
+        loss, w = learning_by_logistic_gradient_descent(y, tx, w, gamma)
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, the loss={l}, the weight={ww}".format(i=iter, l=loss,ww = w))
+        # converge criteria
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            return losses[-1], w
+    return losses[-1], w
+
+
+def predict_label_logistic_regression(x, w):
+    """
+        This function predicts the labels (0,1) associated to the data x, 
+        according to a logistic regression trained to a parameter w
+        
+        inputs : 
+        "x" : (N x D) matrix, storing the data. the N rows correspond to the N samples 
+            and the D columns to the D features
+        "w" : size D vector, weights associated to the features
+        ouputs : 
+        "y_pred" : size N vector, containing the labels associated to the different samples 
+    """
+    
+    # get the number of sample
+    N=x.shape[0]
+    
+    # initialization of the predictions vector
+    y_pred=np.zeros(N)
+    # filling it with predictions
+    for i in range (N):
+        s=sigmoid(np.dot(x[i],w))
+        if (s>=0.5):
+            y_pred[i]=1
+        else:
+            y_pred[i]=0
+            
+    #return the predicted labels
+    return y_pred
+
+    

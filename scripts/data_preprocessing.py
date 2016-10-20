@@ -6,6 +6,23 @@ from costs import *
 from proj1_helpers import *
 from helpers import *
 
+def standardize(x):
+    #getting the number of samples and the number of dimensions
+    n,d=np.shape(x)
+    
+    for i in range(d):
+        #computation of the mean and the standard deviation of each dimension
+        m=np.mean(x[:,i])
+        s=np.std(x[:,i])
+        #standardizing this dimension samples
+        if s>0:
+            x[:,i]=(x[:,i]-m)/s
+        else:
+            x[:,i]=(x[:,i]-m)
+            #sending a warning
+            print("warning : the standard deviation of the dimension :", i, " is null")
+    return x
+
 
 def select_random(y, tX, num_samples, seed=1):
     """ 
@@ -67,6 +84,7 @@ def split_data(x, y, ratio, seed=1):
     #returning the result
     return xtrain,xtest,ytrain,ytest
 
+
 def my_pca(x, ratio): 
     """
         This function realizes a PCA (features selection) on the matrix x.
@@ -120,15 +138,110 @@ def my_pca(x, ratio):
     #keep the corresponding eigenvectors
     U=eigvectors[:,:k]
     return U,k
-          
+      
+    
 def build_poly(x,degree):
     """
         This function treats the features in x using polynomial basis. 
         
         input : 
-        ""
+        "x" : 2D-array, each row corresponding to a sample (maybe preprocessed).
+               one coordinate by feature 
+               ( n : number of features), (m : number of samples)
+        "degree" : int, the maximal degree of the polynomial basis
+        
+        output : 
+        "phi" : 2D array, each row corresponding to a sample
+                dimension m x (n(degree)+1)
     """
     
+    #local variables
+    m = x.shape[0]
+    n = x.shape[1]
+    
+    # create the new matrix
+    phi = np.ones((m, n*degree+1))
+    
+    # fill the matrix
+    for i in range(m):
+        for j in range(n):
+            for t in range(degree):
+                phi[i,(1+t)+degree*j]=x[i,j]**(t+1)
+            
    
+    # return the matrix 
+    return phi
+
+
+def clean_data(x): 
+    """
+        As some values where missing in the original data set, -999 have been put instead. 
+        This function deals with this problem by replacing -999 by the average of the good samples values for this feature
+        
+        input : 
+        "x" : a 2D array containing bad values
+        ouput : 
+        "y" : a 2D array with the same dimension where we replaced the -999 value
+        
+    """
+    #First compute the mean for each column of values that are not -999
+    m=x.shape[0]
+    n=x.shape[1]
+    num_samples=np.zeros(n)
+    mean=np.zeros(n)
+    for j in range(n):
+        for i in range(m):
+            if (x[i,j]!=-999):
+                mean[j]=mean[j]+x[i,j]
+                num_samples[j]=num_samples[j]+1
+        if (num_samples[j]!=0): 
+            mean[j]=mean[j]/num_samples[j]
+    y=np.copy(x)
     
-    
+    for i in range(m):
+        for j in range(n):
+            if(y[i,j]==-999):
+                y[i,j]=mean[j]
+    return y
+
+
+def clean_remove_data(x,threshold):
+    """
+        As some values where missing in the original data set, -999 have been put instead. 
+        This function deals with this problem by replacing -999 by the average of the good samples values for this feature
+        
+        input : 
+        "x" : a 2D array containing bad values
+        "threshold" : float in [0,1], upper which we delete a column
+        ouput : 
+        "indexes" : an array containing the indices of columns to be deleted
+    """
+    bad=[]
+    m=x.shape[0]
+    n=x.shape[1]
+    for j in range(n):
+        if ((x[:,j]==-999).sum()/len(x[:,j])>threshold):
+            bad.append(j)
+    return bad  
+
+
+def pre_process_logistic_training_labels(ytrain):
+    """
+        This function pre-process the training labels for logistic regression, 
+        as the label used in the course are 0,1 and the labels used here are -1 and 1
+    """
+    # replace the -1 by 0
+    y = np.copy(ytrain)
+    y[y = -1] = 0
+    return y
+
+
+def post_process_logistic_predicted_labels(ypred):
+    """
+        This function pre-process the training labels for logistic regression, 
+        as the label used in the course are 0,1 and the labels used here are -1 and 1
+    """
+    # replace the 0 by -1
+    y = np.copy(ypred)
+    y[y = 0] = 1
+    return y
