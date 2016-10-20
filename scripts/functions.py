@@ -196,3 +196,38 @@ def train_data(xtrain,ytrain,n_regression=1,lambd=0.1,gamma=0.000001,max_iters=5
         
     #returning the trained weights vector
     return weights
+
+def logistic_regression_GD(y, tx, gamma, max_iters):
+    """ Logistic regression using Gradient descent.
+    
+    As loss fuction of logistic regression is a L-lipschitz function, it is better to use 
+        $$gamma=1/L$$
+    where $L=||tx.T @ tx||/4$ is the lipschitz constant.
+    
+    inputs:
+        "y"        : 1D-array, containing the training values associated to each sample.
+        "tx"       : nD-array, each row contains the data associated to a sample.
+                       each column contains all the sample values for a feature.
+        "gamma"    : float, gradient descent learning rate
+        "max_iters": maximum number of iterations
+        
+    returns: 
+        "cost"     : float,value of the cost function associated to the optimal analytical weight vector
+                     obtained from logistic regression.
+        "w"        : 1-D array, optimal weight code associated to the logistic regression cost function,
+                     with respect to tx and y.
+    """
+    
+    def sigmoid(x, clip_range=100):
+        # to avoid overflow in exponential, clip input x into a reasonable large range
+        cliped_x = np.clip(x, -clip_range, clip_range)
+        return 1/(1+np.exp(-cliped_x))
+    
+    # randomly initialize the weight vector
+    w = np.random.randn(tx.shape[1]) * 0.1
+    for i in range(max_iters):
+        w = w - gamma * tx.T @ (sigmoid(tx @ w) - y)
+        cost = np.sum(np.log(1 + np.exp(tx @ w)) - y.T @ tx @ w)
+        print ("Losgistic Regression({bi}/{ti}): loss={l}".format(
+            bi=i, ti=max_iters, l=cost))
+    return w, cost
