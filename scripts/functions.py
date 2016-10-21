@@ -227,7 +227,7 @@ def calculate_logistic_gradient(y, tx, w):
     vsigmo = np.vectorize(sigmoid)
     #computing the resulting vector
     res_sigmo = vsigmo(arg_sigmo)
-    
+
     #computing the difference between this vector and the labels
     diff = res_sigmo - y.reshape((len(y),1))
     #compute the gradient
