@@ -2,6 +2,7 @@
 """functions used to train the model."""
 
 import numpy as np
+import math
 from costs import *
 from proj1_helpers import *
 from helpers import *
@@ -228,7 +229,12 @@ def calculate_logistic_gradient(y, tx, w):
     res_sigmo = vsigmo(arg_sigmo)
     
     #computing the difference between this vector and the labels
-    diff = res_sigmo-y
+    diff = res_sigmo - y.reshape([len(y),1])
+    
+    # debug print("shape de res_sigmo", res_sigmo.shape)
+    # debug print("shape de y ", y.shape)
+    # debug print( " shape de diff ", diff.shape)
+    # debugprint(" shape de transpose tx ", x.shape)
     
     #compute the gradient
     grad = np.dot(x,diff)
@@ -246,24 +252,23 @@ def learning_by_logistic_gradient_descent(y, tx, w, alpha):
     
     #compute the gradient
     grad = calculate_logistic_gradient(y, tx, w)
+    # debug print("shape de grad", grad.shape)
     
     #update the weight vector
-    w_new = w -alpha*grad
+    w_new = w - alpha*grad
+    # debug print("shape de w_new", w_new.shape)
     
     #return the previous loss and the new weight vector
     return loss, w_new
 
 
-def logistic_regression(y, x, gamma = 0.01, max_iter = 1000, threshold = 1e-8):
+def logistic_regression(y, tx, gamma = 0.01, max_iter = 1000, threshold = 1e-8):
     """
         This function, inspired by the gradient descent demo of TD5 performs a gradient descent for 
         logistic regression
     """
     #initialize the vector of losses
     losses = []
-
-    # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), x]
     w = np.zeros((tx.shape[1], 1))
 
     # start the logistic regression
@@ -274,8 +279,9 @@ def logistic_regression(y, x, gamma = 0.01, max_iter = 1000, threshold = 1e-8):
         if iter % 100 == 0:
             print("Current iteration={i}, the loss={l}, the weight={ww}".format(i=iter, l=loss,ww = w))
         # converge criteria
+        #np.abs(losses[-1] - losses[-2]) < threshold
         losses.append(loss)
-        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+        if len(losses) > 1 and (losses[-1] > losses[-2] - threshold ):
             return losses[-1], w
     return losses[-1], w
 
