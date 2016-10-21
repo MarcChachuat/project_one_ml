@@ -2,6 +2,7 @@
 """functions used to train the model."""
 
 import numpy as np
+import math
 from costs import *
 from proj1_helpers import *
 from helpers import *
@@ -228,8 +229,7 @@ def calculate_logistic_gradient(y, tx, w):
     res_sigmo = vsigmo(arg_sigmo)
     
     #computing the difference between this vector and the labels
-    diff = res_sigmo-y
-    
+    diff = res_sigmo - y.reshape((len(y),1))
     #compute the gradient
     grad = np.dot(x,diff)
     return grad
@@ -254,16 +254,15 @@ def learning_by_logistic_gradient_descent(y, tx, w, alpha):
     return loss, w_new
 
 
-def logistic_regression(y, x, gamma = 0.01, max_iter = 1000, threshold = 1e-8):
+def logistic_regression(y, tx, gamma = 0.01, max_iter = 1000, threshold = 1e-8):
     """
         This function, inspired by the gradient descent demo of TD5 performs a gradient descent for 
         logistic regression
     """
-    #initialize the vector of losses
+    # initialize the vector of losses
     losses = []
 
-    # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), x]
+    # intialize the weight
     w = np.zeros((tx.shape[1], 1))
 
     # start the logistic regression
