@@ -232,7 +232,7 @@ def pre_process_logistic_training_labels(ytrain):
     """
     # replace the -1 by 0
     y = np.copy(ytrain)
-    y[y== -1] = 0
+    y[y = -1] = 0
     return y
 
 
@@ -243,5 +243,5 @@ def post_process_logistic_predicted_labels(ypred):
     """
     # replace the 0 by -1
     y = np.copy(ypred)
-    y[y == 0] = -1
+    y[y = 0] = 1
     return y
