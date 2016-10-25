@@ -11,7 +11,7 @@ def standardize(x, mean_x=None, std_x=None):
         std_x = np.std(x, axis=0)
     x[:, std_x>0] = x[:, std_x>0] / std_x[std_x>0]
     
-    tx = np.hstack((np.ones((x.shape[0],1)), x))
+    tx = np.hstack((x, np.ones((x.shape[0],1))))
     return tx, mean_x, std_x
 
 
