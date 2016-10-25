@@ -20,6 +20,19 @@ DATA_TRAIN_PATH = '../data/train.csv'
 y, tX, ids = load_csv_data(DATA_TRAIN_PATH)
 print("loading of the data : done")
 
+##### Select some data
+num_samples=10000
+seed=3
+y, tX= select_random(y, tX, num_samples, seed)
+print ("random selection of samples : done")
+print( "number of samples : ", y.shape[0])
+
+##### Split the data
+xtrain1,xvalid1,ytrain,yvalid = split_data(tX, y, 0.7)
+print( "splitting of the data : done ")
+print("number of training samples :", xtrain1.shape[0])
+
+
 #################################################################################################################################
 ############################ Part II : Linear Regression ########################################################################
 
@@ -27,21 +40,13 @@ print("Linear regression models ...")
 
 ########## A) Data Preprocessing 
 
-##### Select some data
-num_samples=5000
-seed=3
-y_lin, tX_lin = select_random(y, tX, num_samples, seed)
-print ("random selection of samples : done")
-print( "number of samples : ", y.shape[0])
-
-##### Split the data
-xtrain1,xvalid1,ytrain,yvalid = split_data(tX_lin, y_lin, 0.7)
-print( "splitting of the data : done ")
-print("number of training samples :", xtrain1.shape[0])
+# Replace the missing values by the mean over other samples
+xtrain1bis = fill_na(xtrain1, method=np.mean)
+xvalid1bis = fill_na(xvalid1, method=np.mean)
 
 ##### Standardize the data
-xtrain1bis = standardize(xtrain1)
-xvalid1bis = standardize(xvalid1)
+xtrain1ter = standardize(xtrain1bis)
+xvalid1ter = standardize(xvalid1bis)
 
 ##### Reduce the dimension : Perform a PCA on the training data
 
@@ -118,3 +123,73 @@ print("Associated weight vector : " , str(weights_rr))
 ################################################################################################################################
 ############################ Part III : Logistic regression  ###################################################################
 
+
+    # TO DO 
+    
+    # NOTE FOR HE  : I have already select random samples among all the tX,y and created the training and validation set
+    # see the Part One 
+    # As a recall : 
+    # xtrain1 => training part of the reduced tX
+    # xvalid1 => validation part of the reduced tX
+    # ytrain1 => training part of the reduced y
+    # yvalid1 => validation part of the reduced y
+    # WARNING : these data aren't cleaned neither standardized
+    
+    # I will need you to call your best percentage of error on the validation set : "err_log"
+err_log = 1
+
+################################################################################################################################
+############################ Part IV : Selection of the best parametered model ##################################################
+
+
+# comparison of the two percentage of error 
+if (err_rr < err_log):
+    best_model = "polynomial ridge"
+else:
+    best_model = "logistic"
+
+################################################################################################################################
+############################ Part V : Prediction using the best parametered model ###############################################
+
+###### A) Get the data test path
+DATA_TEST_PATH = '../data/test.csv'
+_, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
+
+##### B) Get the output path
+
+# output path 
+OUTPUT_PATH = '../results/result_final.csv' 
+
+##### C) Make the submission
+
+if (best_model == "polynomial ridge"):
+    
+    # predict using polynomial ridge regression model
+    print(" best model : polynomial ridge regression " )
+    
+    ### preprocess the submission data for the ridge regression: 
+    
+    # 1) clean the test data 
+    xtest = fill_na(tX_test, method=np.mean)
+    
+    # 2) standardize
+    xtest1 = standardize(xtest)
+    
+    # 3) project 
+    xtest2 = np.dot(xtest1, U)
+    
+    # 4) build polynomial basis
+    xtest_rr =build_polynomial_without_mixed_term(xtest2, degree_best_rr)
+    
+    
+    # 5) predict the labels and save the prediction in a csv file 
+    y_pred = predict_labels(weights_rr, xtest_rr)
+    create_csv_submission(ids_test, y_pred, OUTPUT_PATH)
+    
+else:
+    
+    # predict using logistic regression model
+    print( "best model : logistic regression model ")
+    
+    # TO DO : He
+    
