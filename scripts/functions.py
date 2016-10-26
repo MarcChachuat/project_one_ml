@@ -217,6 +217,13 @@ def reg_logistic_regression_GD(y, tx, gamma, max_iters, lambda_, regularizor=reg
     assert(lambda_>= 0)
     return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_,regularizor=regularizor)
 
+def logistic_regression_SGD(y, tx, gamma, max_iters, w0=None):
+    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_itersm, w0=w0)
+
+def reg_logistic_regression_SGD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge, w0=None):
+    assert(lambda_>= 0)
+    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_, w0=w0, regularizor=regularizor)
+
 def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
     """ Logistic regression using Gradient descent.
     
