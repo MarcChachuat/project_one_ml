@@ -51,6 +51,20 @@ def select_random(y, tX, num_samples, seed=1):
     return y2,tX2
 
 
+def fill_na(tX, method=np.mean):
+    columns_with_missing_values = []
+    n_total_features=tX.shape[1]
+    for i in range(n_total_features):
+        if -999 in tX[:, i]:
+            columns_with_missing_values.append(i)
+    filled = tX.copy()
+    for col in columns_with_missing_values:
+        tmp = filled[:, col]
+        tmp[tmp == -999] = method(tmp[tmp != -999])
+        filled[:, col] = tmp
+    return filled
+
+
 def split_data(x, y, ratio, seed=1):
     """
     split the dataset based on the split ratio.
@@ -172,6 +186,13 @@ def build_poly(x,degree):
     # return the matrix 
     return phi
 
+def build_polynomial_without_mixed_term(tx, degree=2):
+    n = tx.shape[0]
+    tmp = tx
+    for i in range(2, degree+1):
+        tmp = np.c_[tmp, tx**i]
+    # The function standardize will add a column of 1s in the first column
+    return tmp
 
 def clean_data(x): 
     """
@@ -203,27 +224,7 @@ def clean_data(x):
             if(y[i,j]==-999):
                 y[i,j]=mean[j]
     return y
-
-
-def clean_remove_data(x,threshold):
-    """
-        As some values where missing in the original data set, -999 have been put instead. 
-        This function deals with this problem by replacing -999 by the average of the good samples values for this feature
-        
-        input : 
-        "x" : a 2D array containing bad values
-        "threshold" : float in [0,1], upper which we delete a column
-        ouput : 
-        "indexes" : an array containing the indices of columns to be deleted
-    """
-    bad=[]
-    m=x.shape[0]
-    n=x.shape[1]
-    for j in range(n):
-        if ((x[:,j]==-999).sum()/len(x[:,j])>threshold):
-            bad.append(j)
-    return bad  
-
+ 
 
 def pre_process_logistic_training_labels(ytrain):
     """
