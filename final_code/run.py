@@ -174,7 +174,7 @@ if (best_model == "polynomial ridge"):
     
     # 2) standardize
     xtest1 = my_standardize(xtest)
-    print("xtest1 :", xtest1)
+
     
     # 3) project 
     xtest2 = np.dot(xtest1, U)
