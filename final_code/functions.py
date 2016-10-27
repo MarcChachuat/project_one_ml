@@ -200,6 +200,10 @@ def sigmoid(x, clip_range=20):
     # to avoid overflow in exponential, clip input x into a reasonable large range
     cliped_x = np.clip(x, -clip_range, clip_range)
     return 1/(1+np.exp(-cliped_x))
+def sigmoid(x, clip_range=20):
+    # to avoid overflow in exponential, clip input x into a reasonable large range
+    cliped_x = np.clip(x, -clip_range, clip_range)
+    return 1/(1+np.exp(-cliped_x))
 
 def regularizor_lasso(w):
     # return loss and gradient
@@ -215,6 +219,13 @@ def logistic_regression_GD(y, tx, gamma, max_iters):
 def reg_logistic_regression_GD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge):
     assert(lambda_>= 0)
     return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_,regularizor=regularizor)
+
+def logistic_regression_SGD(y, tx, gamma, max_iters, w0=None):
+    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_itersm, w0=w0)
+
+def reg_logistic_regression_SGD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge, w0=None):
+    assert(lambda_>= 0)
+    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_, w0=w0, regularizor=regularizor)
 
 def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
     """ Logistic regression using Gradient descent.
@@ -236,26 +247,102 @@ def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambd
         "w"        : 1-D array, optimal weight code associated to the logistic regression cost function,
                      with respect to tx and y.
     """    
-    # randomly initialize the weight vector
     def logistic_loss(y, tx, w):
         """compute the cost by negative log likelihood."""
         r,_ = regularizor(w)
-        return np.sum(-np.log(1 - sigmoid(tx @ w)) - y.T @ tx @ w) + lambda_ * r
+        return np.sum(-np.log(1 - sigmoid(tx @ w))) - y.T @ tx @ w + lambda_ * r
     
     def logistic_gradient(y, tx, w):
         """compute the gradient of loss."""
         _, g = regularizor(w)
         return tx.T @ (sigmoid(tx @ w) - y) + lambda_ * g
 
-    w = np.random.randn(tx.shape[1]) * 0.1
+    # Initialize weights
     if w0 is not None:
         w = w0
+    else:
+        w = np.random.randn(tx.shape[1]) * 0.1
+
     costs = []
-    
+
+    # Training
     for i in range(max_iters):
-        w = w - gamma * logistic_gradient(y, tx, w)
+        w    = w - gamma * logistic_gradient(y, tx, w)
         cost = logistic_loss(y, tx, w)
+
         if i % 1000 == 0:
-            print ("Losgistic Regression({bi}/{ti}): loss={l}".format(bi=i, ti=max_iters, l=cost))
+            print ("Losgistic Regression({bi: >8}/{ti}): loss={l: 10.15}".format(bi=i, ti=max_iters, l=cost))
         costs.append(cost)
     return w, costs
+
+def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
+    """ Logistic regression using accelerated Gradient descent with restart.
+    
+    As loss fuction of logistic regression is a L-lipschitz function, it is better to use 
+        $$gamma=1/L$$
+    where $L=||tx.T @ tx||/4$ is the lipschitz constant.
+    
+    inputs:
+        "y"        : 1D-array, containing the training values associated to each sample.
+        "tx"       : nD-array, each row contains the data associated to a sample.
+                       each column contains all the sample values for a feature.
+        "gamma"    : float, gradient descent learning rate
+        "max_iters": maximum number of iterations
+        "w0"       : initial place
+        "regularizor": types of regularizor function which returns the value regularizor term and its gradient. 
+        
+    returns: 
+        "w"        : 1-D array, optimal weight code associated to the logistic regression cost function,
+                     with respect to tx and y.
+    """    
+    def grad(w):
+        """compute the gradient of loss."""
+        _, g = regularizor(w)
+        return tx.T @ (sigmoid(tx @ w) - y) + lambda_ * g
+    
+    def loss(w):
+        """compute the cost by negative log likelihood."""
+        r,_ = regularizor(w)
+        return np.sum(-np.log(1 - sigmoid(tx @ w))) - y.T @ tx @ w + lambda_ * r
+    
+    # Initialization
+    if w0 is None:
+        w = np.random.randn(tx.shape[1])
+    else:
+        w = w0
+
+    # initialization
+    z = w
+    t = 1
+    
+    last_cost = np.inf
+    for i in range(max_iters):
+        w_next = z - gamma * grad(z)
+
+        # Restart if the new loss is larger
+        if loss(w) <= loss(w_next):
+            z = w
+            t = 1
+            w_next = z - gamma*grad(z)
+        
+        t_next = (1+np.sqrt(1+4*t**2))/2
+        z_next = w_next + (t-1)/(t+1)*(w_next - w)
+        
+        # update
+        z, w, t = z_next, w_next, t_next
+
+        cost = loss(w_next)
+        if i % 100 == 0:
+            print ("Losgistic Regression({bi: >8}/{ti}): loss={l: 10.15}".format(bi=i, ti=max_iters, l=cost))
+
+            if last_cost - cost < 1e-5 * abs(last_cost):
+                print ("Totoal number of iterations = ", i)
+                print ("Loss                        = ", cost)
+                break
+
+            last_cost = cost
+        
+        # The learning rate becomes smaller as the number iterations grows.    
+        gamma = 1/(1/gamma + 1)
+
+    return w

@@ -6,23 +6,59 @@ from costs import *
 from proj1_helpers import *
 from helpers import *
 
-def standardize(x):
-    #getting the number of samples and the number of dimensions
-    n,d=np.shape(x)
+# def standardize(x):
+#     #getting the number of samples and the number of dimensions
+#     n,d=np.shape(x)
     
-    for i in range(d):
-        #computation of the mean and the standard deviation of each dimension
-        m=np.mean(x[:,i])
-        s=np.std(x[:,i])
-        #standardizing this dimension samples
-        if s>0:
-            x[:,i]=(x[:,i]-m)/s
-        else:
-            x[:,i]=(x[:,i]-m)
-            #sending a warning
-            print("warning : the standard deviation of the dimension :", i, " is null")
-    return x
+#     for i in range(d):
+#         #computation of the mean and the standard deviation of each dimension
+#         m=np.mean(x[:,i])
+#         s=np.std(x[:,i])
+#         #standardizing this dimension samples
+#         if s>0:
+#             x[:,i]=(x[:,i]-m)/s
+#         else:
+#             x[:,i]=(x[:,i]-m)
+#             #sending a warning
+#             print("warning : the standard deviation of the dimension :", i, " is null")
+#     return x
 
+def transform_y(y):
+    tmp = y.copy()
+    tmp[tmp == -1]=0
+    return tmp
+
+def transform_y_back(y):
+    tmp = y.copy()
+    tmp[tmp==0]=-1  
+    return tmp
+
+def fill_na(tX, method=np.mean):
+    """ fill NA term with method provided"""
+    columns_with_missing_values = []
+    n_total_features=tX.shape[1]
+    for i in range(n_total_features):
+        if -999 in tX[:, i]:
+            columns_with_missing_values.append(i)
+
+    filled = tX.copy()
+    for col in columns_with_missing_values:
+        tmp = filled[:, col]
+        tmp[tmp == -999] = method(tmp[tmp != -999])
+        filled[:, col] = tmp
+    return filled
+
+def build_polynomial_without_mixed_term(tx, degree=2):
+    """ build polynomial terms.
+
+    The constant terms will be added in the standardize function.
+    """
+    n = tx.shape[0]
+    tmp = tx
+    for i in range(2, degree+1):
+        tmp = np.c_[tmp, tx**i]
+
+    return tmp
 
 def select_random(y, tX, num_samples, seed=1):
     """ 
@@ -49,20 +85,6 @@ def select_random(y, tX, num_samples, seed=1):
         y2 = y2[:num_samples]
         tX2 = tX2[:num_samples,:]
     return y2,tX2
-
-
-def fill_na(tX, method=np.mean):
-    columns_with_missing_values = []
-    n_total_features=tX.shape[1]
-    for i in range(n_total_features):
-        if -999 in tX[:, i]:
-            columns_with_missing_values.append(i)
-    filled = tX.copy()
-    for col in columns_with_missing_values:
-        tmp = filled[:, col]
-        tmp[tmp == -999] = method(tmp[tmp != -999])
-        filled[:, col] = tmp
-    return filled
 
 
 def split_data(x, y, ratio, seed=1):

@@ -14,7 +14,6 @@ def standardize(x, mean_x=None, std_x=None):
     tx = np.hstack((x, np.ones((x.shape[0],1))))
     return tx, mean_x, std_x
 
-
 def batch_iter(y, tx, batch_size, num_batches=None, shuffle=True):
     """
     Generate a minibatch iterator for a dataset.

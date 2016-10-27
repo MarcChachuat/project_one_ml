@@ -4,20 +4,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from functions import *
-
-from functions import *
 from helpers import *
 from proj1_helpers import *
 from costs import *
 from data_preprocessing import *
+import os
 
 #################################################################################################################################
 ############################ Part I : Load the training data into feature matrix, class labels, and event ids: ##################
-
-from proj1_helpers import *
 DATA_TRAIN_PATH = '../data/train.csv' 
-# download train data 
-y, tX, ids = load_csv_data(DATA_TRAIN_PATH)
+
+# download train data / cache data
+if os.path.exists('../data/y.npy') and os.path.exists('../data/tX.npy') and os.path.exists('../data/ids.npy'):
+    y   = np.load('../data/y.npy'  )
+    tX  = np.load('../data/tX.npy' )
+    ids = np.load('../data/ids.npy')
+    print("Reload")
+else:
+    y, tX, ids = load_csv_data(DATA_TRAIN_PATH)
+    np.save('../data/y',     y)
+    np.save('../data/tX',   tX)
+    np.save('../data/ids', ids)
+
 print("loading of the data : done")
 
 ##### Select some data
@@ -47,8 +55,7 @@ xvalid1bis = fill_na(xvalid1, method=np.mean)
 ##### Standardize the data
 xtrain1ter = standardize(xtrain1bis)
 xvalid1ter = standardize(xvalid1bis)
-
-##### Reduce the dimension : Perform a PCA on the training data
+# ##### Reduce the dimension : Perform a PCA on the training data
 
 # percentage of information we keep during the PCA
 ratio_pca=0.8
@@ -136,7 +143,63 @@ print("Associated weight vector : " , str(weights_rr))
     # WARNING : these data aren't cleaned neither standardized
     
     # I will need you to call your best percentage of error on the validation set : "err_log"
-err_log = 1
+
+# Setups for logistic regression
+degree     = 3
+iterations = 100000
+
+# Types of regularizor used
+regularizor = regularizor_lasso
+lambda_     = 0.01
+fill_method = np.median
+
+# Replace the missing values by the mean over other samples
+xtrain1bis = fill_na(xtrain1, method=fill_method)
+xvalid1bis = fill_na(xvalid1, method=fill_method)
+
+# Transform y to take value in {0, 1} 
+transformed_y = transform_y(ytrain)
+
+# Build polynomial for features
+tmp                = build_polynomial_without_mixed_term(xtrain1bis, degree=degree)
+logistic_tX , _, _ = standardize(tmp)
+
+# The loss function of logistic regression is a L-lipschitz function, thus the 
+# learning rate gamma can be determined by 1/L.
+L = abs(np.linalg.eigvals(logistic_tX.T @ logistic_tX)).max()
+
+# Output settings for this problem
+print("--------------------- Setups of logistic regression-------------------------")
+print("Accelerated Gradient Descent with Restart is used for solving Higgs Problem.")
+print("Learning rate used in Logistic regression = ", 1/L)
+print("lambda used in Logistic regression        = ", lambda_)
+print("degree of polynomial used in modeling     = ", degree)
+print("maximum number of iterations              = ", iterations)
+
+if regularizor == regularizor_lasso:
+    print("the regularizor used here is Lasso")
+else:
+    print("the regularizor used here is Ridge")
+
+print("--------------------- Begin training -------------------------")
+weights_lg = logistic_AGDR(transformed_y, logistic_tX, gamma=1/L, \
+                   max_iters = iterations, lambda_=lambda_, regularizor=regularizor)
+
+def prediction_accuracy(y, y_pred):
+    return np.mean(y == y_pred)
+
+# Calculate training error of logistic regression.
+logistic_pred_y = predict_labels(weights_lg, logistic_tX)
+err_log         = prediction_accuracy(ytrain, logistic_pred_y)
+print ("--------------Performance of Logistic regression-------------")
+print ("Training error of Logistic regression = ", err_log)
+
+# Performance on validation set 
+tmp = build_polynomial_without_mixed_term(xvalid1bis, degree=degree)
+validation_tx, _, _ = standardize(tmp)
+
+print ("Validation accuracy                   = ", prediction_accuracy(yvalid, predict_labels(weights_lg, validation_tx)))
+print ("------------------------------------------------------------")
 
 ################################################################################################################################
 ############################ Part IV : Selection of the best parametered model ##################################################
@@ -148,10 +211,12 @@ if (err_rr < err_log):
 else:
     best_model = "logistic"
 
+best_model = 1
 ################################################################################################################################
 ############################ Part V : Prediction using the best parametered model ###############################################
 
 ###### A) Get the data test path
+print ("Loading Test data")
 DATA_TEST_PATH = '../data/test.csv'
 _, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
 
@@ -173,7 +238,7 @@ if (best_model == "polynomial ridge"):
     xtest = fill_na(tX_test, method=np.mean)
     
     # 2) standardize
-    xtest1 = standardize(xtest)
+    xtest1, _, _ = standardize(xtest)
     
     # 3) project 
     xtest2 = np.dot(xtest1, U)
@@ -191,5 +256,16 @@ else:
     # predict using logistic regression model
     print( "best model : logistic regression model ")
     
-    # TO DO : He
+    ### preprocess the submission data for the ridge regression: 
+    # 1) build polynomial basis
+    xtest = fill_na(tX_test, method=fill_method)
+
+
+    tmp =build_polynomial_without_mixed_term(xtest, degree)
+    
+    xtest_lg, _, _ = standardize(tmp)
+    
+    # 5) predict the labels and save the prediction in a csv file 
+    y_pred = predict_labels(weights_lg, xtest_lg)
+    create_csv_submission(ids_test, y_pred, OUTPUT_PATH)
     
