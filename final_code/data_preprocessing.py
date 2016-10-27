@@ -6,22 +6,22 @@ from costs import *
 from proj1_helpers import *
 from helpers import *
 
-# def standardize(x):
-#     #getting the number of samples and the number of dimensions
-#     n,d=np.shape(x)
-    
-#     for i in range(d):
-#         #computation of the mean and the standard deviation of each dimension
-#         m=np.mean(x[:,i])
-#         s=np.std(x[:,i])
-#         #standardizing this dimension samples
-#         if s>0:
-#             x[:,i]=(x[:,i]-m)/s
-#         else:
-#             x[:,i]=(x[:,i]-m)
-#             #sending a warning
-#             print("warning : the standard deviation of the dimension :", i, " is null")
-#     return x
+def my_standardize(x):
+    #get the number of samples and the number of dimensions
+    n,d=np.shape(x)
+
+    for i in range(d):
+        #computation of the mean and the standard deviation of each dimension
+        m=np.mean(x[:,i])
+        s=np.std(x[:,i])
+        #standardizing this dimension samples
+        if s>0:
+            x[:,i]=(x[:,i]-m)/s
+        else:
+            x[:,i]=(x[:,i]-m)
+            #sending a warning
+            print("warning : the standard deviation of the dimension :", i, " is null")
+    return x
 
 def transform_y(y):
     tmp = y.copy()
