@@ -211,7 +211,6 @@ if (err_rr < err_log):
 else:
     best_model = "logistic"
 
-best_model = 1
 ################################################################################################################################
 ############################ Part V : Prediction using the best parametered model ###############################################
 
@@ -219,7 +218,7 @@ best_model = 1
 print ("Loading Test data")
 DATA_TEST_PATH = '../data/test.csv'
 _, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
-
+print ("Loading finishes.")
 ##### B) Get the output path
 
 # output path 
