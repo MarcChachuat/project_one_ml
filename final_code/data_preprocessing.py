@@ -6,10 +6,10 @@ from costs import *
 from proj1_helpers import *
 from helpers import *
 
-def standardize(x):
-    #getting the number of samples and the number of dimensions
+def my_standardize(x):
+    #get the number of samples and the number of dimensions
     n,d=np.shape(x)
-    
+
     for i in range(d):
         #computation of the mean and the standard deviation of each dimension
         m=np.mean(x[:,i])

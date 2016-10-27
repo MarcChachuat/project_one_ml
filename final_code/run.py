@@ -3,13 +3,13 @@
 # Useful starting lines
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import *
 
 from functions import *
 from helpers import *
 from proj1_helpers import *
 from costs import *
 from data_preprocessing import *
+from implementations import *
 
 #################################################################################################################################
 ############################ Part I : Load the training data into feature matrix, class labels, and event ids: ##################
@@ -45,27 +45,27 @@ xtrain1bis = fill_na(xtrain1, method=np.mean)
 xvalid1bis = fill_na(xvalid1, method=np.mean)
 
 ##### Standardize the data
-xtrain1ter = standardize(xtrain1bis)
-xvalid1ter = standardize(xvalid1bis)
+xtrain1ter = my_standardize(xtrain1bis)
+xvalid1ter = my_standardize(xvalid1bis)
 
 ##### Reduce the dimension : Perform a PCA on the training data
 
 # percentage of information we keep during the PCA
-ratio_pca=0.8
+ratio_pca=0.9
 
 # find the projector
-U, k = my_pca(xtrain1bis, ratio_pca)
+U, k = my_pca(xtrain1ter, ratio_pca)
 print("PCA done ")
 
 # projecting the data 
-xtrain2=np.dot(xtrain1bis,U)
-xvalid2=np.dot(xvalid1bis,U)
+xtrain2=np.dot(xtrain1ter,U)
+xvalid2=np.dot(xvalid1ter,U)
 
 
 ########## B) Comparison of the polynomial ridge regression
 
 # range for the parameters
-lambdas = np.logspace(-3, 3, 500) 
+lambdas = np.logspace(-3, 6, 500) 
 degree=7
 
 # initial best parameters
@@ -86,7 +86,7 @@ for t in range(1,degree):
         
         # train the model for the ridge regression given the current lambda
         weights = train_data(xtrain_rr, ytrain, n_regression=4,lambd=lambd_)
-
+        
         # compute its error on the validation set
         yvalid_pred = predict_labels(weights, xvalid_rr)
         score = 0
@@ -97,7 +97,7 @@ for t in range(1,degree):
         #if its score is better than the best current one we keep the (weights, lambda couple)
         if score<score_ref:
             # updating the best parameters and errors
-            w_ref=weights
+            w_ref = weights
             score_ref = score
             lambd_ref = lambd_
             degree_ref = t
@@ -158,7 +158,7 @@ _, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
 ##### B) Get the output path
 
 # output path 
-OUTPUT_PATH = '../results/result_final.csv' 
+OUTPUT_PATH = '../results/result_final2.csv' 
 
 ##### C) Make the submission
 
@@ -173,13 +173,14 @@ if (best_model == "polynomial ridge"):
     xtest = fill_na(tX_test, method=np.mean)
     
     # 2) standardize
-    xtest1 = standardize(xtest)
+    xtest1 = my_standardize(xtest)
+    print("xtest1 :", xtest1)
     
     # 3) project 
     xtest2 = np.dot(xtest1, U)
     
     # 4) build polynomial basis
-    xtest_rr =build_polynomial_without_mixed_term(xtest2, degree_best_rr)
+    xtest_rr = build_polynomial_without_mixed_term(xtest2, degree_best_rr)
     
     
     # 5) predict the labels and save the prediction in a csv file 
@@ -191,5 +192,4 @@ else:
     # predict using logistic regression model
     print( "best model : logistic regression model ")
     
-    # TO DO : He
-    
+    # TO DO : He   
