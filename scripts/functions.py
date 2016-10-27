@@ -55,6 +55,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     return w_final
 
 
+
 def compute_stoch_gradient(y, tx, w):
     """Compute a stochastic gradient for batch data."""
     minibatch_e=y-np.dot(tx,w)
@@ -197,6 +198,7 @@ def train_data(xtrain,ytrain,n_regression = 1,lambd = 0.1,gamma = 0.000001,max_i
     #returning the trained weights vector
     return weights
 
+<<<<<<< HEAD
 ####################################################################################################################################################################### Logistic regression functions ############################################################
 # Warning !!!! These functions are to be used with labels 0 or 1 therefore we have to pre-process the training labels and post process the predicted ones
 
@@ -309,3 +311,68 @@ def predict_label_logistic_regression(x, w):
     return y_pred
 
     
+=======
+def sigmoid(x, clip_range=20):
+    # to avoid overflow in exponential, clip input x into a reasonable large range
+    cliped_x = np.clip(x, -clip_range, clip_range)
+    return 1/(1+np.exp(-cliped_x))
+
+def regularizor_lasso(w):
+    # return loss and gradient
+    return np.sum(np.abs(w)), np.sign(w)
+
+def regularizor_ridge(w):
+    # return loss and gradient
+    return np.sum(w**2), 2 * w
+
+def logistic_regression_GD(y, tx, gamma, max_iters):
+    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters)
+
+def reg_logistic_regression_GD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge):
+    assert(lambda_>= 0)
+    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_,regularizor=regularizor)
+
+def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
+    """ Logistic regression using Gradient descent.
+    
+    As loss fuction of logistic regression is a L-lipschitz function, it is better to use 
+        $$gamma=1/L$$
+    where $L=||tx.T @ tx||/4$ is the lipschitz constant.
+    
+    inputs:
+        "y"        : 1D-array, containing the training values associated to each sample.
+        "tx"       : nD-array, each row contains the data associated to a sample.
+                       each column contains all the sample values for a feature.
+        "gamma"    : float, gradient descent learning rate
+        "max_iters": maximum number of iterations
+        
+    returns: 
+        "cost"     : float,value of the cost function associated to the optimal analytical weight vector
+                     obtained from logistic regression.
+        "w"        : 1-D array, optimal weight code associated to the logistic regression cost function,
+                     with respect to tx and y.
+    """    
+    # randomly initialize the weight vector
+    def logistic_loss(y, tx, w):
+        """compute the cost by negative log likelihood."""
+        r,_ = regularizor(w)
+        return np.sum(-np.log(1 - sigmoid(tx @ w)) - y.T @ tx @ w) + lambda_ * r
+    
+    def logistic_gradient(y, tx, w):
+        """compute the gradient of loss."""
+        _, g = regularizor(w)
+        return tx.T @ (sigmoid(tx @ w) - y) + lambda_ * g
+
+    w = np.random.randn(tx.shape[1]) * 0.1
+    if w0 is not None:
+        w = w0
+    costs = []
+    
+    for i in range(max_iters):
+        w = w - gamma * logistic_gradient(y, tx, w)
+        cost = logistic_loss(y, tx, w)
+        if i % 1000 == 0:
+            print ("Losgistic Regression({bi}/{ti}): loss={l}".format(bi=i, ti=max_iters, l=cost))
+        costs.append(cost)
+    return w, costs
+>>>>>>> he
