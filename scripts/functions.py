@@ -54,6 +54,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     return w_final
 
 
+
 def compute_stoch_gradient(y, tx, w):
     """Compute a stochastic gradient for batch data."""
     minibatch_e=y-np.dot(tx,w)
