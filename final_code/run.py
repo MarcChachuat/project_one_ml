@@ -233,7 +233,6 @@ validation_tx, _, _ = feature_engineering(xvalid1, mean_x, std_x)
 
 print ("Validation accuracy                   = ", prediction_accuracy(yvalid, predict_labels(weights_lg, validation_tx)))
 print ("------------------------------------------------------------")
-err_rr = 1
 ################################################################################################################################
 ############################ Part IV : Selection of the best parametered model ##################################################
 
@@ -244,7 +243,6 @@ if (err_rr < err_log):
 else:
     best_model = "logistic"
 
-best_model = 1
 ################################################################################################################################
 ############################ Part V : Prediction using the best parametered model ###############################################
 
