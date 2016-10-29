@@ -44,7 +44,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
         w = w - gamma*grad
         # Store the new weight and the loss associated to the previous weight
         ws.append(np.copy(w))
-        #print(np.copy(w))
+
         losses.append(loss)
         # Print the new weight and the previous loss.
         print("Gradient Descent iteration : ", str(n_iter), " done \n")
@@ -197,7 +197,6 @@ def train_data(xtrain,ytrain,n_regression = 1,lambd = 0.1,gamma = 0.000001,max_i
     #returning the trained weights vector
     return weights
 
-<<<<<<< HEAD
 ####################################################################################################################################################################### Logistic regression functions ############################################################
 # Warning !!!! These functions are to be used with labels 0 or 1 therefore we have to pre-process the training labels and post process the predicted ones
 
@@ -309,8 +308,6 @@ def predict_label_logistic_regression(x, w):
     #return the predicted labels
     return y_pred
 
-    
-=======
 def sigmoid(x, clip_range=20):
     # to avoid overflow in exponential, clip input x into a reasonable large range
     cliped_x = np.clip(x, -clip_range, clip_range)
@@ -330,13 +327,6 @@ def logistic_regression_GD(y, tx, gamma, max_iters):
 def reg_logistic_regression_GD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge):
     assert(lambda_>= 0)
     return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_,regularizor=regularizor)
-
-def logistic_regression_SGD(y, tx, gamma, max_iters, w0=None):
-    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_itersm, w0=w0)
-
-def reg_logistic_regression_SGD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge, w0=None):
-    assert(lambda_>= 0)
-    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_, w0=w0, regularizor=regularizor)
 
 def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
     """ Logistic regression using Gradient descent.
@@ -385,7 +375,6 @@ def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambd
             print ("Losgistic Regression({bi: >8}/{ti}): loss={l: 10.15}".format(bi=i, ti=max_iters, l=cost))
         costs.append(cost)
     return w, costs
-<<<<<<< HEAD
 
 def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
     """ Logistic regression using accelerated Gradient descent with restart.
@@ -418,20 +407,18 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         return np.sum(-np.log(1 - sigmoid(tx @ w))) - y.T @ tx @ w + lambda_ * r
     
     # Initialization
-    if w0 is None:
-        w = np.random.randn(tx.shape[1])
-    else:
-        w = w0
+    w = w0 if w0 is not None else np.random.randn(tx.shape[1])
 
     # initialization
     z = w
     t = 1
     
     last_cost = np.inf
+    costs = [last_cost]
     for i in range(max_iters):
         w_next = z - gamma * grad(z)
 
-        # Restart if the new loss is larger
+        # Restart if the loss of new weight is larger than the original one
         if loss(w) <= loss(w_next):
             z = w
             t = 1
@@ -447,17 +434,15 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         if i % 100 == 0:
             print ("Losgistic Regression({bi: >8}/{ti}): loss={l: 10.15}".format(bi=i, ti=max_iters, l=cost))
 
-            if last_cost - cost < 1e-5 * abs(last_cost):
+            if abs(last_cost - cost) < 1e-5 * abs(last_cost):
                 print ("Totoal number of iterations = ", i)
                 print ("Loss                        = ", cost)
                 break
 
             last_cost = cost
-        
+            costs.append(cost)
+            
         # The learning rate becomes smaller as the number iterations grows.    
         gamma = 1/(1/gamma + 1)
 
-    return w
-=======
->>>>>>> he
->>>>>>> d4807e68cb8eb94dd075ba880b13897c5e91f132
+    return w, costs

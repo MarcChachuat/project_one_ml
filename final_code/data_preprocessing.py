@@ -6,6 +6,62 @@ from costs import *
 from proj1_helpers import *
 from helpers import *
 
+def logs_of_features(tx, feature_lists):
+    """ logs of features features"""
+    return np.log(tx[:, feature_lists] + 1e-8)
+
+def decompose_categorical_features(tx):
+    """decompose categorical features
+    
+    Feature 11, 12 ,22 are categorical. Features 11, 12 are binary
+    while 22 has four values.
+    
+    input:
+        tx: tX without missing terms
+    return:
+        m : matrix of expened categorical features.
+    """
+    
+    tmp11 = 1 * (tx[:, 11] > 0)    
+    tmp12 = 1 * (tx[:, 12] > 0.5)
+    
+    tmp22_0 = tx[:, 22].copy()
+    tmp22_0 = 1 * (tmp22_0 == 0)
+    
+    tmp22_1 = tx[:, 22].copy()
+    tmp22_1 = 1 * (tmp22_1 == 1)
+    
+    tmp22_2 = tx[:, 22].copy()
+    tmp22_2 = 1 * (tmp22_2 == 2)
+    
+    tmp22_3 = tx[:, 22].copy()
+    tmp22_3 = 1 * (tmp22_3 == 3)
+
+    m = np.c_[tmp11, tmp12, tmp22_0, tmp22_1, tmp22_2, tmp22_3]
+    if np.linalg.matrix_rank(m) < 6:
+        print (np.linalg.matrix_rank(m))
+        print (m)
+        print ("Feature decomposition results in singularity")
+    return m
+
+def missing_indicator(tx, features):
+    """ build a new feature indicating if values of datapoint on features
+        is missing
+    """
+    return 1 * (tx[:, features] == -999)
+
+def inver_terms(tx, features):
+    """ build inversion of features for a given list"""    
+    return 1/(tx[:, features]+1e-8)
+
+def mixed_features(tx, features):
+    """ build new features by pairwise multiplication"""
+    foo = np.zeros(tx.shape[0])
+    for i, fi in enumerate(features):
+        for j in range(i+1, len(features)):
+             foo = np.c_[foo, tx[:, features[i]] * tx[:, features[j]]]
+    return foo[:, 1:]
+
 def my_standardize(x):
     #get the number of samples and the number of dimensions
     n,d=np.shape(x)

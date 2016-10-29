@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from functions import *
 
 from functions import *
-from implementations import *
+#from implementations import *
 from helpers import *
 from proj1_helpers import *
 from costs import *
@@ -66,7 +66,7 @@ ratio_pca=0.8
 U, k = my_pca(xtrain1bis, ratio_pca)
 print("PCA done ")
 
-# projecting the data 
+projecting the data 
 xtrain2=np.dot(xtrain1bis,U)
 xvalid2=np.dot(xvalid1bis,U)
 
@@ -132,28 +132,57 @@ print("Associated weight vector : " , str(weights_rr))
 ################################################################################################################################
 ############################ Part III : Logistic regression  ###################################################################
 
+# Classify features based on their properties
+Features_Good            = [7, 10, 14, 15, 17, 18, 20]
+Features_with_outlier    = [3, 8, 19, 23, 26, 29]
+Features_skewed          = [1, 2, 5, 9, 13, 16, 21]
+Features_missing_entry   = [0, 4, 5, 6, 12, 23, 24, 25, 26, 27, 28]
+Features_categorical     = [11, 12, 22]
+Features_non_categorical = [x for x in range(30) if x not in Features_categorical]
+Features_using_log       = np.union1d(Features_with_outlier, Features_skewed)
+
+# Fill the missing values with their median or mean.
+filled_tX_median     = fill_na(tX, np.median)
+# filled_tX_mean       = fill_na(tX, np.mean)
+
 # Setups for logistic regression
 degree     = 3
 iterations = 100000
 
 # Types of regularizor used
 regularizor = regularizor_lasso
-lambda_     = 0.01
-
-# Replace the missing values by the mean over other samples
-xtrain1bis = fill_na(xtrain1, method=np.median)
-xvalid1bis = fill_na(xvalid1, method=np.median)
+lambda_     = 0.1
 
 # Transform y to take value in {0, 1} 
 transformed_y = transform_y(ytrain)
 
-# Build polynomial for features
-tmp                = build_polynomial_without_mixed_term(xtrain1bis, degree=degree)
-logistic_tX , _, _ = standardize(tmp)
+# For non categorical features, build polynomials
+# Replace the missing values by the mean over other samples
+
+def feature_engineering(xtrain1, input_mean_x=None, input_std_x=None):
+    xtrain1bis = fill_na(xtrain1, method=np.median)
+
+    missing_indicator_tX = missing_indicator(xtrain1, Features_missing_entry)
+    log_tX               = logs_of_features (xtrain1bis, Features_using_log)
+    decomposed_tX        = decompose_categorical_features(xtrain1bis)
+    inverse_tX           = inver_terms   (xtrain1bis, Features_using_log)
+    mixed_tX             = mixed_features(xtrain1bis, Features_non_categorical)
+
+    poly_tX     = build_polynomial_without_mixed_term(xtrain1bis[:, Features_non_categorical], degree=degree)
+    log_poly_tX = build_polynomial_without_mixed_term(log_tX    , degree=degree)
+    inv_poly_tX = build_polynomial_without_mixed_term(inverse_tX, degree=degree)
+
+    # Build a design matrix
+    design_matrix = np.c_[poly_tX, decomposed_tX, log_poly_tX, missing_indicator_tX, inv_poly_tX, mixed_tX]
+
+    logistic_tX, mean_x, std_x = standardize(design_matrix, input_mean_x, input_std_x)
+    return logistic_tX, mean_x, std_x
+
+logistic_tX, mean_x, std_x = feature_engineering(xtrain1)
 
 # The loss function of logistic regression is a L-lipschitz function, thus the 
 # learning rate gamma can be determined by 1/L.
-L = abs(np.linalg.eigvals(logistic_tX.T @ logistic_tX)).max()
+L = np.real(abs(np.linalg.eigvals(logistic_tX.T @ logistic_tX)).max())
 
 # Output settings for this problem
 print("--------------------- Setups of logistic regression-------------------------")
@@ -162,6 +191,7 @@ print("Learning rate used in Logistic regression = ", 1/L)
 print("lambda used in Logistic regression        = ", lambda_)
 print("degree of polynomial used in modeling     = ", degree)
 print("maximum number of iterations              = ", iterations)
+print("Size of trainging data size               = ", len(transformed_y))
 
 if regularizor == regularizor_lasso:
     print("the regularizor used here is Lasso")
@@ -169,7 +199,9 @@ else:
     print("the regularizor used here is Ridge")
 
 print("--------------------- Begin training -------------------------")
-w = logistic_AGDR(transformed_y, logistic_tX, gamma=1/L, \
+
+
+w, losses = logistic_AGDR(transformed_y, logistic_tX, gamma=1/L, \
                    max_iters = iterations, lambda_=lambda_, regularizor=regularizor)
 
 def prediction_accuracy(y, y_pred):
@@ -182,8 +214,7 @@ print ("--------------Performance of Logistic regression-------------")
 print ("Training error of Logistic regression = ", err_log)
 
 # Performance on validation set 
-tmp = build_polynomial_without_mixed_term(xvalid1bis, degree=degree)
-validation_tx, _, _ = standardize(tmp)
+validation_tx, _, _ = feature_engineering(xvalid1, mean_x, std_x)
 
 print ("Validation accuracy                   = ", prediction_accuracy(yvalid, predict_labels(w, validation_tx)))
 print ("------------------------------------------------------------")

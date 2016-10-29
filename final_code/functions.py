@@ -48,6 +48,62 @@ def train_data(xtrain,ytrain,n_regression=1,lambd=0.1,gamma=0.000001,max_iters=5
     #returning the trained weights vector
     return weights
 
+def cross_validation_var(y, tx, K, func, seed, fpred, faccuracy, max_fold):
+    """Cross validation (varied version)
+    
+    When the datasets are large and we want to train on a small subset of data,
+    and validate them on the rest of datasets. We will first divide the the data
+    into K parts and train on only one of them, then test them on the rest K-1
+    parts.
+    
+    input:
+        y   : 1-D array (processed).
+        tx  : 2-D design matrix (processed).
+        K   : K-folded cross validation
+        func: function which takes (y, tx) as argument
+        seed: random seed
+        
+        fpred: prediction function
+        faccuracy: function for calculating accuracy
+        
+    return:
+        ave_acc : averaged accuracy
+    """
+    import time
+    
+    np.random.seed(seed)
+    n = len(y)
+    tr_size = n // K
+    perm  = np.random.permutation(np.arange(n)).reshape(K, tr_size)
+    idx = np.ma.array(np.arange(K), mask=False)
+                                    
+    def get_index():
+        i = 0
+        while i < K:
+            idx.mask[i] = True
+            yield perm[i], perm[idx].flatten()
+            idx.mask[i] = False
+            i = i + 1
+    
+    accs = 0
+    for i, (tr_idx, cv_idx) in zip(np.arange(max_fold), get_index()):
+        start   = time.time()
+
+        w, cost = func(y[tr_idx], tx[tr_idx, :])
+        end     = time.time()
+        print ("Time for {i:2}th cross validation = {t:3.6}s".format(i=i, t=end-start))
+        
+        pred_y  = fpred(tx[cv_idx], w)
+        cv_acc  = faccuracy(pred_y, y[cv_idx])
+        pred_y  = fpred(tx[tr_idx], w)
+        tr_acc  = faccuracy(pred_y, y[tr_idx])
+        
+        print ("Training Accuracy         = {a:6.10}".format(a=tr_acc))
+        print ("Cross Validation Accuracy = {a:6.10}".format(a=cv_acc))
+        accs    = accs + cv_acc
+        
+    return accs/min(max_fold,K)
+
 def sigmoid(x, clip_range=20):
     # to avoid overflow in exponential, clip input x into a reasonable large range
     cliped_x = np.clip(x, -clip_range, clip_range)
@@ -67,13 +123,6 @@ def logistic_regression_GD(y, tx, gamma, max_iters):
 def reg_logistic_regression_GD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge):
     assert(lambda_>= 0)
     return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_,regularizor=regularizor)
-
-def logistic_regression_SGD(y, tx, gamma, max_iters, w0=None):
-    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_itersm, w0=w0)
-
-def reg_logistic_regression_SGD(y, tx, gamma, max_iters, lambda_, regularizor=regularizor_ridge, w0=None):
-    assert(lambda_>= 0)
-    return reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, lambda_=lambda_, w0=w0, regularizor=regularizor)
 
 def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regularizor_ridge):
     """ Logistic regression using Gradient descent.
@@ -154,20 +203,18 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         return np.sum(-np.log(1 - sigmoid(tx @ w))) - y.T @ tx @ w + lambda_ * r
     
     # Initialization
-    if w0 is None:
-        w = np.random.randn(tx.shape[1])
-    else:
-        w = w0
+    w = w0 if w0 is not None else np.random.randn(tx.shape[1])
 
     # initialization
     z = w
     t = 1
     
     last_cost = np.inf
+    costs = [last_cost]
     for i in range(max_iters):
         w_next = z - gamma * grad(z)
 
-        # Restart if the new loss is larger
+        # Restart if the loss of new weight is larger than the original one
         if loss(w) <= loss(w_next):
             z = w
             t = 1
@@ -183,14 +230,15 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         if i % 100 == 0:
             print ("Losgistic Regression({bi: >8}/{ti}): loss={l: 10.15}".format(bi=i, ti=max_iters, l=cost))
 
-            if last_cost - cost < 1e-5 * abs(last_cost):
+            if abs(last_cost - cost) < 1e-5 * abs(last_cost):
                 print ("Totoal number of iterations = ", i)
                 print ("Loss                        = ", cost)
                 break
 
             last_cost = cost
-        
+            costs.append(cost)
+            
         # The learning rate becomes smaller as the number iterations grows.    
         gamma = 1/(1/gamma + 1)
 
-    return w, cost
+    return w, costs
