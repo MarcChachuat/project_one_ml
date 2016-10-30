@@ -362,7 +362,7 @@ def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambd
     if w0 is not None:
         w = w0
     else:
-        w = np.random.randn(tx.shape[1]) * 0.1
+        w = np.zeros(tx.shape[1])
 
     costs = []
 
@@ -407,7 +407,7 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         return np.sum(-np.log(1 - sigmoid(tx @ w))) - y.T @ tx @ w + lambda_ * r
     
     # Initialization
-    w = w0 if w0 is not None else np.random.randn(tx.shape[1])
+    w = w0 if w0 is not None else np.zeros(tx.shape[1])
 
     # initialization
     z = w
@@ -434,7 +434,7 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         if i % 100 == 0:
             print ("Losgistic Regression({bi: >8}/{ti}): loss={l: 10.15}".format(bi=i, ti=max_iters, l=cost))
 
-            if abs(last_cost - cost) < 1e-5 * abs(last_cost):
+            if last_cost - cost < 1e-5 * abs(last_cost):
                 print ("Totoal number of iterations = ", i)
                 print ("Loss                        = ", cost)
                 break
@@ -443,6 +443,6 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
             costs.append(cost)
             
         # The learning rate becomes smaller as the number iterations grows.    
-        gamma = 1/(1/gamma + 1)
+        # gamma = 1/(1/gamma + 1)
 
     return w, costs

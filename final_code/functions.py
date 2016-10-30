@@ -155,10 +155,7 @@ def reg_logistic_regression_GD_with_init(y, tx, gamma, max_iters, w0=None, lambd
         return tx.T @ (sigmoid(tx @ w) - y) + lambda_ * g
 
     # Initialize weights
-    if w0 is not None:
-        w = w0
-    else:
-        w = np.random.randn(tx.shape[1]) * 0.1
+    w = w0 if w0 is not None else np.zeros(tx.shape[1])
 
     costs = []
 
@@ -203,7 +200,7 @@ def logistic_AGDR(y, tx, gamma, max_iters, w0=None, lambda_= 0, regularizor=regu
         return np.sum(-np.log(1 - sigmoid(tx @ w))) - y.T @ tx @ w + lambda_ * r
     
     # Initialization
-    w = w0 if w0 is not None else np.random.randn(tx.shape[1])
+    w = w0 if w0 is not None else np.zeros(tx.shape[1])
 
     # initialization
     z = w

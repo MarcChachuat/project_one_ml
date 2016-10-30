@@ -29,7 +29,7 @@ else:
 print("loading of the data : done")
 
 ##### Select some data
-num_samples=10000
+num_samples=30000
 seed=3
 y, tX= select_random(y, tX, num_samples, seed)
 print ("random selection of samples : done")
@@ -44,88 +44,88 @@ print("number of training samples :", xtrain1.shape[0])
 #################################################################################################################################
 ############################ Part II : Linear Regression ########################################################################
 
-# print("Linear regression models ...")
+print("Linear regression models ...")
 
-# ########## A) Data Preprocessing 
+########## A) Data Preprocessing 
 
-# # Replace the missing values by the mean over other samples
-# xtrain1bis = fill_na(xtrain1, method=np.mean)
-# xvalid1bis = fill_na(xvalid1, method=np.mean)
+# Replace the missing values by the mean over other samples
+xtrain1bis = fill_na(xtrain1, method=np.mean)
+xvalid1bis = fill_na(xvalid1, method=np.mean)
 
-# ##### Standardize the data
-# # ##### Reduce the dimension : Perform a PCA on the training data
-# xtrain1ter = my_standardize(xtrain1bis)
-# xvalid1ter = my_standardize(xvalid1bis)
+##### Standardize the data
+# ##### Reduce the dimension : Perform a PCA on the training data
+xtrain1ter = my_standardize(xtrain1bis)
+xvalid1ter = my_standardize(xvalid1bis)
 
-# # percentage of information we keep during the PCA
-# ratio_pca=0.9
+# percentage of information we keep during the PCA
+ratio_pca=0.9
 
-# # find the projector
-# U, k = my_pca(xtrain1ter, ratio_pca)
-# print("PCA done ")
+# find the projector
+U, k = my_pca(xtrain1ter, ratio_pca)
+print("PCA done ")
 
-# # projecting the data 
-# xtrain2=np.dot(xtrain1ter,U)
-# xvalid2=np.dot(xvalid1ter,U)
+# projecting the data 
+xtrain2=np.dot(xtrain1ter,U)
+xvalid2=np.dot(xvalid1ter,U)
 
 
-# ########## B) Comparison of the polynomial ridge regression
+########## B) Comparison of the polynomial ridge regression
 
-# # range for the parameters
-# lambdas = np.logspace(-3, 6, 500) 
-# degree=7
+# range for the parameters
+lambdas = np.logspace(-3, 6, 500) 
+degree=7
 
-# # initial best parameters
-# degree_ref=0
-# w_ref = 0
-# lambd_ref=0
-# score_ref = float("inf")
+# initial best parameters
+degree_ref=0
+w_ref = 0
+lambd_ref=0
+score_ref = float("inf")
 
-# # loop over the degrees
-# for t in range(1,degree):
+# loop over the degrees
+for t in range(1,degree):
     
-#     # build polynomial basis of the current degree
-#     xtrain_rr = build_polynomial_without_mixed_term(xtrain2, t)
-#     xvalid_rr = build_polynomial_without_mixed_term(xvalid2, t)
+    # build polynomial basis of the current degree
+    xtrain_rr = build_polynomial_without_mixed_term(xtrain2, t)
+    xvalid_rr = build_polynomial_without_mixed_term(xvalid2, t)
     
-#     # loop over the lambdas
-#     for lambd_ in lambdas:
+    # loop over the lambdas
+    for lambd_ in lambdas:
         
-#         # train the model for the ridge regression given the current lambda
-#         weights = train_data(xtrain_rr, ytrain, n_regression=4,lambd=lambd_)
+        # train the model for the ridge regression given the current lambda
+        weights = train_data(xtrain_rr, ytrain, n_regression=4,lambd=lambd_)
         
-#         # compute its error on the validation set
-#         yvalid_pred = predict_labels(weights, xvalid_rr)
-#         score = 0
-#         for i in range(yvalid.shape[0]):
-#             if (yvalid_pred[i] != yvalid[i]):
-#                 score = score + 1
+        # compute its error on the validation set
+        yvalid_pred = predict_labels(weights, xvalid_rr)
+        score = 0
+        for i in range(yvalid.shape[0]):
+            if (yvalid_pred[i] != yvalid[i]):
+                score = score + 1
                 
-#         #if its score is better than the best current one we keep the (weights, lambda couple)
-#         if score<score_ref:
-#             # updating the best parameters and errors
-#             w_ref = weights
-#             score_ref = score
-#             lambd_ref = lambd_
-#             degree_ref = t
+        #if its score is better than the best current one we keep the (weights, lambda couple)
+        if score<score_ref:
+            # updating the best parameters and errors
+            w_ref = weights
+            score_ref = score
+            lambd_ref = lambd_
+            degree_ref = t
             
-#         # print the result for this iteration    
-#         print("degree : ", str(t),  ", study of the parameter :", str(lambd_), " done. Error associated : ", str(score_ref/yvalid.shape[0]))
+        # print the result for this iteration    
+        print("degree : ", str(t),  ", study of the parameter :", str(lambd_), " done. Error associated : ", str(score_ref/yvalid.shape[0]))
 
         
-# ########## C) Results of the comparison        
+########## C) Results of the comparison        
 
-# # Best parameters
-# degree_best_rr = degree_ref
-# weights_rr = w_ref
-# err_rr = score_ref/yvalid.shape[0]
+# Best parameters
+degree_best_rr = degree_ref
+weights_rr = w_ref
+err_rr = score_ref/yvalid.shape[0]
 
-# # Plot the results 
-# print("Finding of the best ridge regression parameters : done")
-# print("Best lambda parameter : " , str(lambd_ref))
-# print("Best degree : ", str(degree_best_rr))
-# print(" Associated error (in percent of the validation set) : " , str(err_rr))
-# print("Associated weight vector : " , str(weights_rr))
+# Plot the results 
+print("Finding of the best ridge regression parameters : done")
+print("Best lambda parameter : " , str(lambd_ref))
+print("Best degree : ", str(degree_best_rr))
+print(" Associated error (in percent of the validation set) : " , str(err_rr))
+print("Associated weight vector : " , str(weights_rr))
 
 ################################################################################################################################
 ############################ Part III : Logistic regression  ###################################################################
@@ -154,29 +154,28 @@ Features_non_categorical = [x for x in range(30) if x not in Features_categorica
 Features_using_log       = np.union1d(Features_with_outlier, Features_skewed)
 
 # Setups for logistic regression
-degree     = 2
-iterations = 1000
+degree     = 3
+iterations = 10000
 
 # Types of regularizor used
 regularizor = regularizor_lasso
-lambda_     = 0.1
+lambda_     = 1
 
 # Transform y to take value in {0, 1} 
 transformed_y = transform_y(ytrain)
 
 def feature_engineering(xtrain1, input_mean_x=None, input_std_x=None):
+    print ("Begin feature engineering...")
     # For non categorical features, build polynomials
     # Replace the missing values by the mean over other samples
     xtrain1bis = fill_na(xtrain1, method=np.median)
 
     # create a feature to indicate if some of the fields of a datapoint is missing
-    missing_indicator_tX = missing_indicator(xtrain1, Features_missing_entry)
+    missing_indicator_tX = missing_indicator(xtrain1)
     # take logs of some features whose value is non-negative
     log_tX               = logs_of_features (xtrain1bis, Features_using_log)
     # decompose categorical features into binary ones
     decomposed_tX        = decompose_categorical_features(xtrain1bis)
-    # take inverse of features
-    inverse_tX           = inver_terms   (xtrain1bis, Features_using_log)
     # mixed polynomial terms
     mixed_tX             = mixed_features(xtrain1bis, Features_non_categorical)
 
@@ -185,11 +184,13 @@ def feature_engineering(xtrain1, input_mean_x=None, input_std_x=None):
     # polynomial terms of logs of features
     log_poly_tX = build_polynomial_without_mixed_term(log_tX    , degree=degree)
     # polynomial terms of inverse of features
-    inv_poly_tX = build_polynomial_without_mixed_term(inverse_tX, degree=degree)
+    # inv_poly_tX = build_polynomial_without_mixed_term(inverse_tX, degree=degree)
 
     # Build a design matrix
-    design_matrix = np.c_[poly_tX, decomposed_tX, log_poly_tX, missing_indicator_tX, inv_poly_tX, mixed_tX]
+    print ("Concatenating features...")
+    design_matrix = np.c_[poly_tX, decomposed_tX, missing_indicator_tX, log_poly_tX, mixed_tX]
 
+    print ("Standardizing features...")
     logistic_tX, mean_x, std_x = standardize(design_matrix, input_mean_x, input_std_x)
     return logistic_tX, mean_x, std_x
 
@@ -207,6 +208,7 @@ print("lambda used in Logistic regression        = ", lambda_)
 print("degree of polynomial used in modeling     = ", degree)
 print("maximum number of iterations              = ", iterations)
 print("Size of trainging data size               = ", len(transformed_y))
+print("Number of features used                   = ", logistic_tX.shape[1])
 
 if regularizor == regularizor_lasso:
     print("the regularizor used here is Lasso")
@@ -224,10 +226,11 @@ def prediction_accuracy(y, y_pred):
 
 # Calculate training error of logistic regression.
 logistic_pred_y = predict_labels(weights_lg, logistic_tX)
-err_log         = prediction_accuracy(ytrain, logistic_pred_y)
+training_accuracy = prediction_accuracy(ytrain, logistic_pred_y)
 print ("--------------Performance of Logistic regression-------------")
-print ("Training error of Logistic regression = ", err_log)
-
+print ("Training error of Logistic regression = ", training_accuracy)
+err_log = losses[-1] / len(transformed_y)
+err_rr = 1
 # Performance on validation set 
 validation_tx, _, _ = feature_engineering(xvalid1, mean_x, std_x)
 
@@ -269,7 +272,7 @@ if (best_model == "polynomial ridge"):
     xtest = fill_na(tX_test, method=np.mean)
     
     # 2) standardize
-    xtest1, _, _ = standardize(xtest)
+    xtest1, _, _ = my_standardize(xtest)
     
     # 3) project 
     xtest2 = np.dot(xtest1, U)

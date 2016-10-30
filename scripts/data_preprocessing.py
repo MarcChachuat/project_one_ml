@@ -33,18 +33,14 @@ def decompose_categorical_features(tx):
     tmp22_2 = tx[:, 22].copy()
     tmp22_2 = 1 * (tmp22_2 == 2)
     
-    tmp22_3 = tx[:, 22].copy()
-    tmp22_3 = 1 * (tmp22_3 == 3)
+    # tmp22_3 = tx[:, 22].copy()
+    # tmp22_3 = 1 * (tmp22_3 == 3)
 
-    m = np.c_[tmp11, tmp12, tmp22_0, tmp22_1, tmp22_2, tmp22_3]
-    if np.linalg.matrix_rank(m) < 6:
-        print (np.linalg.matrix_rank(m))
-        print (m)
-        print ("Feature decomposition results in singularity")
+    m = np.c_[tmp11, tmp12, tmp22_0, tmp22_1, tmp22_2]
     return m
 
-def missing_indicator(tx, features):
-    return 1 * (tx[:, features] == -999)
+def missing_indicator(tx):
+    return 1*(np.sum(tx == -999, axis=1) == 0)
 
 def inver_terms(tx, features):
     return 1/(tx[:, features]+1e-8)

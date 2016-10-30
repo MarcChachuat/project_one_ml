@@ -25,6 +25,9 @@ def decompose_categorical_features(tx):
     tmp11 = 1 * (tx[:, 11] > 0)    
     tmp12 = 1 * (tx[:, 12] > 0.5)
     
+    # The feature 22 has 4 possibilities, (0, 1, 2, 3), we will use 
+    # 3 binary category to classify them.
+    # Note that if we use 4 categories, then the designe matrix will be rank deficient.
     tmp22_0 = tx[:, 22].copy()
     tmp22_0 = 1 * (tmp22_0 == 0)
     
@@ -34,25 +37,21 @@ def decompose_categorical_features(tx):
     tmp22_2 = tx[:, 22].copy()
     tmp22_2 = 1 * (tmp22_2 == 2)
     
-    tmp22_3 = tx[:, 22].copy()
-    tmp22_3 = 1 * (tmp22_3 == 3)
+    # tmp22_3 = tx[:, 22].copy()
+    # tmp22_3 = 1 * (tmp22_3 == 3)
 
-    m = np.c_[tmp11, tmp12, tmp22_0, tmp22_1, tmp22_2, tmp22_3]
-    if np.linalg.matrix_rank(m) < 6:
+    m = np.c_[tmp11, tmp12, tmp22_0, tmp22_1, tmp22_2]
+    if np.linalg.matrix_rank(m) < 5:
         print (np.linalg.matrix_rank(m))
         print (m)
         print ("Feature decomposition results in singularity")
     return m
 
-def missing_indicator(tx, features):
+def missing_indicator(tx):
     """ build a new feature indicating if values of datapoint on features
-        is missing
+        is missing.
     """
-    return 1 * (tx[:, features] == -999)
-
-def inver_terms(tx, features):
-    """ build inversion of features for a given list"""    
-    return 1/(tx[:, features]+1e-8)
+    return 1*(np.sum(tx == -999, axis=1) == 0)
 
 def mixed_features(tx, features):
     """ build new features by pairwise multiplication"""
