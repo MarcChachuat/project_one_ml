@@ -253,7 +253,7 @@ else:
 print ("Loading Test data")
 DATA_TEST_PATH = '../data/test.csv'
 _, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
-
+print ("Loading finishes.")
 ##### B) Get the output path
 
 # output path 
