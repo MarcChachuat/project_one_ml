@@ -45,15 +45,17 @@ By choosing the score over the validation set rather than over the training set,
 	c) the data pre-processing
 	
 To guarantee a good performance (for a reasonnable running time), it was essential to pre-process the data. 
-To do so, we disposed of a few tools seen in the course : standardization, polynomial basis building. 
+To do so, we disposed of a few tools seen in the course : standardization, polynomial basis building, restrict outliers by taking their logrithms and indicating missing values. 
+
 But these methods should be applied to 'clean' data. 
 In our data set, a lot of data were missing (and replaced by -999), what could be problematic. 
 
-We decided to deal with this issue in two steps : 
-- first : remove the -999 and replace them by the mean of the feature over the non missing data.
+We decided to deal with this issue in three steps : 
+- first : remove the -999 and replace them by the mean/median of the feature over the non missing data.
 - second : Yet, this had a drawback : if there was some information in the fact that a data was missing, we didn't take this information into account. 
 Therefore, we tried to replace this information for some columns by a new column of binaries indicating if there was a missing value of not.
-Combinating these two tricks gave us satisfiying results. 
+- third : some of the features have outliers and their peaks are not centered in the middle. We will apply logs to these features so that the outliers will not influence too much and the distribution of data it is not skewed.
+Combinating these three tricks gave us satisfiying results. 
 
 After the cleaning of the data, we standardized the data, as seen in course. 
 But the dimension of our data set was very large and it was problematic for using polynomial basis (or for running time concerns).
@@ -63,16 +65,21 @@ Then, we implemented our own PCA, to keep only a few dimensions without loosing 
 
 Finally, we could use polynomial basis to let the prediction depend not only of the features but also of their powers. 
 
-
 	d) the parameter selection for each model
 
 The two models (ridge and regularized logistic regression) we used for our prediction need some parameters : 
 - the regularization parameter
 - the degree of the polynomial basis
+- training datasets
 
 Rather than randomly trying parameters, we inspired ourselves from the grid search and performed a grid search over the set of parameters (lambda, degree).
 For each model, for each parameter (lambda,degree) over a large range, we obtain a score (% of accuracy) over the validation set when the model is trained over the training set. 
 For each model, we finally keep the couple (lambda,degree) associated to the best score 
+
+In order to have a reasonable training data sets, we plot a learning curve of the size of learning datapoints and choose 25000 to be size of training datasets for logistic regression.
+
+	e) optimization
+Inorder to speedup the gradient descent, *Accelerated Gradient Descent with Restart* is implemented and used. This method gives much better convergence rate. The "line search" method is not used here because we find it doesn't work as well as we expected. Unlinke Newton/Quasi Newton method, AGDR didn't require oracla information about derivative of loss function. Besides, AGDR use less memory than Newton's method.
 
 	e) prediction
 	
@@ -97,6 +104,3 @@ We use it for the final prediction.
 	-costs.py : contains the cost functions provided by the teachers and additional cost functions we added during the project.
 	
 	-data_preprocessing.py : contains the methods dealing with the preprocessing of the data
-
-
-3°) The run.py in details
