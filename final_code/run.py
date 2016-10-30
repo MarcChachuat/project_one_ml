@@ -29,7 +29,7 @@ else:
 print("loading of the data : done")
 
 ##### Select some data
-num_samples=30000
+num_samples=45000
 seed=3
 y, tX= select_random(y, tX, num_samples, seed)
 print ("random selection of samples : done")
@@ -159,7 +159,7 @@ iterations = 10000
 
 # Types of regularizor used
 regularizor = regularizor_lasso
-lambda_     = 1
+lambda_     = 0.5
 
 # Transform y to take value in {0, 1} 
 transformed_y = transform_y(ytrain)
@@ -229,13 +229,13 @@ logistic_pred_y = predict_labels(weights_lg, logistic_tX)
 training_accuracy = prediction_accuracy(ytrain, logistic_pred_y)
 print ("--------------Performance of Logistic regression-------------")
 print ("Training error of Logistic regression = ", training_accuracy)
-err_log = losses[-1] / len(transformed_y)
-err_rr = 1
 # Performance on validation set 
 validation_tx, _, _ = feature_engineering(xvalid1, mean_x, std_x)
 
-print ("Validation accuracy                   = ", prediction_accuracy(yvalid, predict_labels(weights_lg, validation_tx)))
+cv_predict = prediction_accuracy(yvalid, predict_labels(weights_lg, validation_tx))
+print ("Validation accuracy                   = ", cv_predict)
 print ("------------------------------------------------------------")
+err_log = 1 - cv_predict
 ################################################################################################################################
 ############################ Part IV : Selection of the best parametered model ##################################################
 
@@ -253,7 +253,7 @@ else:
 print ("Loading Test data")
 DATA_TEST_PATH = '../data/test.csv'
 _, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
-print ("Loading finishes.")
+
 ##### B) Get the output path
 
 # output path 
