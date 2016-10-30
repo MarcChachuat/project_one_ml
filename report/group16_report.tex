@@ -10,7 +10,7 @@
 \usepackage{amsfonts}
 \usepackage{dsfont }
 \usepackage{wrapfig}
-\usepackage[margin=1.4in]{geometry}
+\usepackage[margin=1.2in]{geometry}
 \begin{document}
 	
 	\title{Pattern Classification And Machine Learning : Project One, Group 16}
@@ -63,5 +63,7 @@
 		In the above section, we mean by "performance", the accuracy over the validation set of the model trained over a training set. By using learning curve , we can find out if a training set size 
 		is large enough to reduce overfitting and if a parameter is suitable for a model. In figure~\ref{fig:1}, the learning curve for logistic regression shows that it is reasonable to choose 28000 data points for training because the training error is close to cross validation error. We also find that the different choice of lambdas behave similarly for cross validation set, and thus choose $\lambda=0.5$ for or model. 
 		
+		Accelerated Gradient Descent with Restart (AGDR) is used here to overcome the disadvantage of gradient descent, the slowness. AGDR has another advantage that it almost requires no extra memory comparing to Newton/Quasi Newton method. This benefit us a lot in this case,  because the size training data sets is large and  we don't want to store the hession of loss function.
+				
 		Finally, to predict the labels for the submissions we just had to select the most performance of our two models by comparing the two optimal accuracy. The test accuracy will be over 82\% for this model, but in fact, we can have better performance by simply using higher order degree of polynomial of degrees and comparisons. The results of comparison are omitted here due to page limit.
 \end{document}

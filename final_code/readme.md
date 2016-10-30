@@ -81,13 +81,11 @@ In order to have a reasonable training data sets, we plot a learning curve of th
 	e) optimization
 Inorder to speedup the gradient descent, *Accelerated Gradient Descent with Restart* is implemented and used. This method gives much better convergence rate. The "line search" method is not used here because we find it doesn't work as well as we expected. Unlinke Newton/Quasi Newton method, AGDR didn't require oracla information about derivative of loss function. Besides, AGDR use less memory than Newton's method.
 
-	e) prediction
+	e) cross validation and prediction
 	
-Then, by comparing the two scores over the validation set, we know which model is the most performant.
-We use it for the final prediction.
+We use 5-folded cross validation to compare the performance of each model. Notice here that the whole data set is too large for training, in practice, we first shuffle all data points and select a dataset for training and the rest for validation, and for each fold of cross validation, we use 5 disjoint training sets. In this way, we can achieve the same goal as the cross validation method given in the course.
 
-
-
+Using cross validation, we can compare models with confidence. Parameters used in this project are all chosen in this way.
 
 2°) Description of the folder
 
@@ -104,3 +102,4 @@ We use it for the final prediction.
 	-costs.py : contains the cost functions provided by the teachers and additional cost functions we added during the project.
 	
 	-data_preprocessing.py : contains the methods dealing with the preprocessing of the data
+
